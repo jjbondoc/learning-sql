@@ -195,3 +195,34 @@ WHERE
     s.ORDER_DATE < '2021-02-01'
 GROUP BY
 	s.CUSTOMER_ID;
+
+-- Join All The Things
+WITH ALL_JOIN AS (
+SELECT 
+	s.CUSTOMER_ID,
+    s.ORDER_DATE,
+    men.PRODUCT_NAME,
+    men.PRICE,
+    CASE
+    	WHEN mem.JOIN_DATE <= s.ORDER_DATE THEN 'Y' ELSE 'N'
+    END AS MEMBER
+FROM
+	SALES s
+    	INNER JOIN
+        	MENU men
+            	ON s.PRODUCT_ID = men.PRODUCT_ID
+        LEFT JOIN
+        	MEMBERS mem
+            	ON s.CUSTOMER_ID = mem.CUSTOMER_ID
+)
+
+--* CASE statement and PARTITION BY MEMBER is used to rank only members
+SELECT
+	*,
+    CASE MEMBER
+    	WHEN 'Y' THEN
+    		DENSE_RANK() OVER (PARTITION BY CUSTOMER_ID, MEMBER ORDER BY CUSTOMER_ID, ORDER_DATE)
+        ELSE NULL 
+    END RANKING
+FROM 
+	ALl_JOIN;
